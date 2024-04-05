@@ -1,8 +1,23 @@
 "use client";
 
 import { Map, Marker, Point } from "pigeon-maps";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Supercluster from "supercluster";
+
+const PinPointIcon = ({ size = 24, color = "black" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
+      fill={color}
+    />
+  </svg>
+);
 
 interface finding {
   id: number;
@@ -25,6 +40,7 @@ export default function FindingsMap(props: FindingsProps) {
   const [center, setCenter] = useState<Point>([
     42.3442114469097, 13.405828595706907,
   ]);
+  const [showMarkers, setShowMarkers] = useState<Boolean>(true);
   const [showBubble, setShowBubble] = useState<Boolean>(false);
   const [supercluster, setSupercluster] = React.useState<Supercluster>();
   const [zoomValue, setZoom] = useState(6);
@@ -35,11 +51,18 @@ export default function FindingsMap(props: FindingsProps) {
     }.png?key=${MAPTILER_ACCESS_TOKEN}`;
   }
 
+  useEffect(() => {
+    setShowMarkers(false);
+    setTimeout(() => {
+      setShowMarkers(true);
+    }, 30);
+  }, [zoomValue]);
+
   React.useEffect(() => {
     const index = new Supercluster({
       // The cluster radius in px, which means minimal distance between the cluster points
-      radius: 15,
-      maxZoom: 16,
+      radius: 80,
+      maxZoom: 14,
     });
 
     index.load(
@@ -80,18 +103,22 @@ export default function FindingsMap(props: FindingsProps) {
     const cluster = point.properties?.cluster || false;
 
     // Sort Findings from latest to earliest to always highlight the upcoming ones
-    //   const clusterItems = cluster ? supercluster?.getLeaves(point.id, Infinity)
-
-    // supercluster?.getLeaves(point.id, Infinity).sort((a:number, b:number) =>
-    //   new Date(b?.properties?.node?.finding?.dateStartISO) -
-    //   new Date(a?.properties?.node?.finding?.dateStartISO)
-    // ) : [point];
+    const clusterItems = cluster
+      ? supercluster?.getLeaves(point.id, Infinity)
+      : [];
 
     return (
       <Marker
         // width={33}
+        children={showMarkers ? undefined : <></>}
         anchor={[point.geometry.coordinates[1], point.geometry.coordinates[0]]}
         key={point.id}
+        onClick={() => {
+          setCenter([
+            point.geometry.coordinates[1],
+            point.geometry.coordinates[0],
+          ]);
+        }}
         //   className={cs.marker}
       >
         {/* <MarkerIcom
@@ -102,6 +129,7 @@ export default function FindingsMap(props: FindingsProps) {
 			  console.log(`Click cluster: ${clusterItems}`);
 			}}
 		  /> */}
+        {/* {showMarkers ? <PinPointIcon /> : <></>} */}
       </Marker>
     );
   };
@@ -119,6 +147,7 @@ export default function FindingsMap(props: FindingsProps) {
       defaultZoom={zoomValue}
       onBoundsChanged={({ center, zoom }) => {
         setZoom(zoom);
+        setCenter(center);
       }}
       minZoom={5}
       maxZoom={15}

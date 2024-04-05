@@ -1497,8 +1497,8 @@ export default async function Index() {
           {
             id: 212,
             coordinates: {
-              latitude: 42.91879341891021,
-              longitude: 12.37141266699048,
+              latitude: 44.38594187539485,
+              longitude: 7.546403302370139,
             },
           },
           {
