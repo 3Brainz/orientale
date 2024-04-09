@@ -1,5 +1,6 @@
 "use client";
 
+import { Height } from "@mui/icons-material";
 import { Box, Button, Modal, Typography } from "@mui/material";
 import { Map, Marker, Overlay, Point } from "pigeon-maps";
 import React, { useEffect, useState } from "react";
@@ -22,10 +23,12 @@ const modalStyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
+  width: { xs: "80vw", md: "50vw" },
+  minHeight: { xs: "80vh", md: "60vh" },
+  height: { xs: "80vh", md: "60vh" },
   bgcolor: "background.paper",
-  border: "2px solid #000",
-  boxShadow: 24,
+  // border: "2px solid #000",
+  // boxShadow: 24,
   p: 4,
 };
 
