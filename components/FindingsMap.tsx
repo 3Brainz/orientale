@@ -1,23 +1,9 @@
 "use client";
 
-import { Map, Marker, Point } from "pigeon-maps";
+import { Box, Button, Modal, Typography } from "@mui/material";
+import { Map, Marker, Overlay, Point } from "pigeon-maps";
 import React, { useEffect, useState } from "react";
 import Supercluster from "supercluster";
-
-const PinPointIcon = ({ size = 24, color = "black" }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
-      fill={color}
-    />
-  </svg>
-);
 
 interface finding {
   id: number;
@@ -31,6 +17,18 @@ interface FindingsProps {
   findings: finding[];
 }
 
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
+
 export default function FindingsMap(props: FindingsProps) {
   const MAPTILER_ACCESS_TOKEN = "YMiwXF5JQEd6Sdrp1NrX";
   const MAP_ID = "landscape";
@@ -40,10 +38,13 @@ export default function FindingsMap(props: FindingsProps) {
   const [center, setCenter] = useState<Point>([
     42.3442114469097, 13.405828595706907,
   ]);
-  const [showMarkers, setShowMarkers] = useState<Boolean>(true);
-  const [showBubble, setShowBubble] = useState<Boolean>(false);
+  const [showMarkers, setShowMarkers] = useState<boolean>(true);
+  const [showBubble, setShowBubble] = useState<boolean>(false);
+  const [shouldShowBubble, setShouldShowBubble] = useState<boolean>(false);
   const [supercluster, setSupercluster] = React.useState<Supercluster>();
-  const [zoomValue, setZoom] = useState(6);
+  const [zoomValue, setZoom] = useState(8);
+  const [animating, setAnimating] = useState<boolean>(false);
+  const [selectedPoints, setSelectedPoints] = useState<object[]>([]);
 
   function mapTiler(x: number, y: number, z: number, dpr?: number | undefined) {
     return `https://api.maptiler.com/maps/${MAP_ID}/256/${z}/${x}/${y}${
@@ -62,6 +63,7 @@ export default function FindingsMap(props: FindingsProps) {
     const index = new Supercluster({
       // The cluster radius in px, which means minimal distance between the cluster points
       radius: 80,
+      minZoom: 8,
       maxZoom: 14,
     });
 
@@ -105,32 +107,44 @@ export default function FindingsMap(props: FindingsProps) {
     // Sort Findings from latest to earliest to always highlight the upcoming ones
     const clusterItems = cluster
       ? supercluster?.getLeaves(point.id, Infinity)
-      : [];
+      : [point];
 
     return (
-      <Marker
+      <Overlay
         // width={33}
-        children={showMarkers ? undefined : <></>}
+        // children={
+        //   showMarkers ? (
+        //     <button
+        //       onClick={() => {
+        //         console.log("ciao");
+        //       }}
+        //     >
+        //       {clusterItems?.length}
+        //     </button>
+        //   ) : (
+        //     <></>
+        //   )
+        // }
         anchor={[point.geometry.coordinates[1], point.geometry.coordinates[0]]}
         key={point.id}
-        onClick={() => {
-          setCenter([
-            point.geometry.coordinates[1],
-            point.geometry.coordinates[0],
-          ]);
-        }}
-        //   className={cs.marker}
       >
-        {/* <MarkerIcom
-			className={cx(cs.icon, {
-			  [cs.upcoming]: clusterItems[0].properties?.upcoming,
-			})}
-			onClick={() => {
-			  console.log(`Click cluster: ${clusterItems}`);
-			}}
-		  /> */}
-        {/* {showMarkers ? <PinPointIcon /> : <></>} */}
-      </Marker>
+        <button
+          onClick={() => {
+            setCenter([
+              point.geometry.coordinates[1],
+              point.geometry.coordinates[0],
+            ]);
+            setSelectedPoints(clusterItems ? clusterItems : []);
+            setTimeout(() => {
+              if (animating) return;
+              else setShowBubble(true);
+            }, 200);
+            setShouldShowBubble(true);
+          }}
+        >
+          {clusterItems?.length}
+        </button>
+      </Overlay>
     );
   };
 
@@ -142,20 +156,46 @@ export default function FindingsMap(props: FindingsProps) {
 
   // ...
   return (
-    <Map
-      height={800}
-      defaultZoom={zoomValue}
-      onBoundsChanged={({ center, zoom }) => {
-        setZoom(zoom);
-        setCenter(center);
-      }}
-      minZoom={5}
-      maxZoom={15}
-      provider={mapTiler}
-      defaultCenter={center}
-      center={center}
-    >
-      {markersAndClusters.map(renderMarker)}
-    </Map>
+    <Box>
+      <Modal
+        open={showBubble}
+        onClose={() => {
+          setShowBubble(false);
+        }}
+      >
+        <Box sx={modalStyle}>
+          {JSON.parse(JSON.stringify(selectedPoints)).map(
+            (point: { id: number }) => {
+              return <Typography key={point.id}>{point.id}</Typography>;
+            }
+          )}
+        </Box>
+      </Modal>
+      <Map
+        height={800}
+        defaultZoom={zoomValue}
+        onBoundsChanged={({ center, zoom }) => {
+          setZoom(zoom);
+          setCenter(center);
+        }}
+        onAnimationStart={() => {
+          setAnimating(true);
+        }}
+        onAnimationStop={() => {
+          setAnimating(false);
+          if (shouldShowBubble) {
+            setShowBubble(true);
+            setShouldShowBubble(false);
+          }
+        }}
+        minZoom={8}
+        maxZoom={15}
+        provider={mapTiler}
+        defaultCenter={center}
+        center={center}
+      >
+        {markersAndClusters.map(renderMarker)}
+      </Map>
+    </Box>
   );
 }
