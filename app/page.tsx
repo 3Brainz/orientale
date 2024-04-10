@@ -1,5 +1,5 @@
-import CustomMap from "@/components/CustomMap";
-import FindingsMap from "@/components/FindingsMap";
+import CustomMap from "@/components/map/CustomMap";
+import FindingsMap from "@/components/map/FindingsMap";
 import { Box } from "@mui/material";
 import { Map, Marker, Overlay, Point } from "pigeon-maps";
 import { useState } from "react";

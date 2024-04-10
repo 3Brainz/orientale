@@ -1,10 +1,22 @@
 "use client";
 
 import { Height } from "@mui/icons-material";
-import { Box, Button, Modal, Typography } from "@mui/material";
+import {
+  Backdrop,
+  Box,
+  Button,
+  Fade,
+  Modal,
+  Typography,
+  Zoom,
+  Pagination,
+  Tabs,
+  Tab,
+} from "@mui/material";
 import { Map, Marker, Overlay, Point } from "pigeon-maps";
 import React, { useEffect, useState } from "react";
 import Supercluster from "supercluster";
+import FindingModal from "./FindingModal";
 
 interface finding {
   id: number;
@@ -24,8 +36,8 @@ const modalStyle = {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: { xs: "80vw", md: "50vw" },
-  minHeight: { xs: "80vh", md: "60vh" },
-  height: { xs: "80vh", md: "60vh" },
+  minHeight: { xs: "60vh", md: "60vh" },
+  height: { xs: "60vh", md: "60vh" },
   bgcolor: "background.paper",
   // border: "2px solid #000",
   // boxShadow: 24,
@@ -139,10 +151,9 @@ export default function FindingsMap(props: FindingsProps) {
             ]);
             setSelectedPoints(clusterItems ? clusterItems : []);
             setTimeout(() => {
-              if (animating) return;
+              if (animating) setShouldShowBubble(true);
               else setShowBubble(true);
-            }, 200);
-            setShouldShowBubble(true);
+            }, 300);
           }}
         >
           {clusterItems?.length}
@@ -160,20 +171,14 @@ export default function FindingsMap(props: FindingsProps) {
   // ...
   return (
     <Box>
-      <Modal
+      <FindingModal
+        children={<></>}
+        points={selectedPoints}
         open={showBubble}
         onClose={() => {
           setShowBubble(false);
         }}
-      >
-        <Box sx={modalStyle}>
-          {JSON.parse(JSON.stringify(selectedPoints)).map(
-            (point: { id: number }) => {
-              return <Typography key={point.id}>{point.id}</Typography>;
-            }
-          )}
-        </Box>
-      </Modal>
+      ></FindingModal>
       <Map
         height={800}
         defaultZoom={zoomValue}
