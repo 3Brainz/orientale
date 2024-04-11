@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FindingPoint } from "./mapInterfaces";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface FindingModalProps extends ModalProps {
   points: FindingPoint[];
@@ -34,7 +34,7 @@ const findingModalStyle = {
 export default function FindingModal(props: FindingModalProps) {
   const { points, ...otherProps } = props;
 
-  const [selectedPoint, setSelectedPoint] = useState(0);
+  const [selectedPoint, setSelectedPoint] = useState(points[0].id);
 
   return (
     <Modal
@@ -51,9 +51,12 @@ export default function FindingModal(props: FindingModalProps) {
     >
       <Fade in={otherProps.open}>
         <Box sx={findingModalStyle}>
-          {points.map((point) => {
+          {/* {points.map((point) => {
             return <Typography key={point.id + "point"}>{point.id}</Typography>;
-          })}
+          })} */}
+          <Box width={"100%"} height={"90%"}>
+            <Typography>{selectedPoint}</Typography>
+          </Box>
           <Box
             width={"100%"}
             display={"flex"}
@@ -70,7 +73,13 @@ export default function FindingModal(props: FindingModalProps) {
               aria-label="scrollable auto tabs example"
             >
               {points.map((point) => {
-                return <Tab label={point.id}></Tab>;
+                return (
+                  <Tab
+                    key={point.id + "-tab"}
+                    value={point.id}
+                    label={point.id}
+                  ></Tab>
+                );
               })}
             </Tabs>
           </Box>

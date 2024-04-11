@@ -1,22 +1,11 @@
 "use client";
 
-import { Height } from "@mui/icons-material";
-import {
-  Backdrop,
-  Box,
-  Button,
-  Fade,
-  Modal,
-  Typography,
-  Zoom,
-  Pagination,
-  Tabs,
-  Tab,
-} from "@mui/material";
+import { Box } from "@mui/material";
 import { Map, Marker, Overlay, Point } from "pigeon-maps";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Supercluster from "supercluster";
 import FindingModal from "./FindingModal";
+import { FindingPoint } from "./mapInterfaces";
 
 interface finding {
   id: number;
@@ -30,36 +19,23 @@ interface FindingsProps {
   findings: finding[];
 }
 
-const modalStyle = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: { xs: "80vw", md: "50vw" },
-  minHeight: { xs: "60vh", md: "60vh" },
-  height: { xs: "60vh", md: "60vh" },
-  bgcolor: "background.paper",
-  // border: "2px solid #000",
-  // boxShadow: 24,
-  p: 4,
-};
-
 export default function FindingsMap(props: FindingsProps) {
   const MAPTILER_ACCESS_TOKEN = "YMiwXF5JQEd6Sdrp1NrX";
   const MAP_ID = "landscape";
+
   const { findings } = props;
-  // We use in with useState and useEffect as we get findings list from props and it could change
-  const [bubbleAnchor, setBubbleAnchor] = useState<Point>([0, 0]);
+
   const [center, setCenter] = useState<Point>([
     42.3442114469097, 13.405828595706907,
   ]);
+
   const [showMarkers, setShowMarkers] = useState<boolean>(true);
   const [showBubble, setShowBubble] = useState<boolean>(false);
   const [shouldShowBubble, setShouldShowBubble] = useState<boolean>(false);
-  const [supercluster, setSupercluster] = React.useState<Supercluster>();
+  const [supercluster, setSupercluster] = useState<Supercluster>();
   const [zoomValue, setZoom] = useState(8);
   const [animating, setAnimating] = useState<boolean>(false);
-  const [selectedPoints, setSelectedPoints] = useState<object[]>([]);
+  const [selectedPoints, setSelectedPoints] = useState<FindingPoint[]>([]);
 
   function mapTiler(x: number, y: number, z: number, dpr?: number | undefined) {
     return `https://api.maptiler.com/maps/${MAP_ID}/256/${z}/${x}/${y}${
@@ -74,7 +50,7 @@ export default function FindingsMap(props: FindingsProps) {
     }, 30);
   }, [zoomValue]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const index = new Supercluster({
       // The cluster radius in px, which means minimal distance between the cluster points
       radius: 80,
@@ -126,38 +102,28 @@ export default function FindingsMap(props: FindingsProps) {
 
     return (
       <Overlay
-        // width={33}
-        // children={
-        //   showMarkers ? (
-        //     <button
-        //       onClick={() => {
-        //         console.log("ciao");
-        //       }}
-        //     >
-        //       {clusterItems?.length}
-        //     </button>
-        //   ) : (
-        //     <></>
-        //   )
-        // }
         anchor={[point.geometry.coordinates[1], point.geometry.coordinates[0]]}
         key={point.id}
       >
-        <button
-          onClick={() => {
-            setCenter([
-              point.geometry.coordinates[1],
-              point.geometry.coordinates[0],
-            ]);
-            setSelectedPoints(clusterItems ? clusterItems : []);
-            setTimeout(() => {
-              if (animating) setShouldShowBubble(true);
-              else setShowBubble(true);
-            }, 300);
-          }}
-        >
-          {clusterItems?.length}
-        </button>
+        {showMarkers ? (
+          <button
+            onClick={() => {
+              setCenter([
+                point.geometry.coordinates[1],
+                point.geometry.coordinates[0],
+              ]);
+              setSelectedPoints(clusterItems ? clusterItems : []);
+              setTimeout(() => {
+                if (animating) setShouldShowBubble(true);
+                else setShowBubble(true);
+              }, 300);
+            }}
+          >
+            {clusterItems?.length}
+          </button>
+        ) : (
+          <></>
+        )}
       </Overlay>
     );
   };
@@ -171,14 +137,18 @@ export default function FindingsMap(props: FindingsProps) {
   // ...
   return (
     <Box>
-      <FindingModal
-        children={<></>}
-        points={selectedPoints}
-        open={showBubble}
-        onClose={() => {
-          setShowBubble(false);
-        }}
-      ></FindingModal>
+      {showBubble ? (
+        <FindingModal
+          children={<></>}
+          points={selectedPoints}
+          open={showBubble}
+          onClose={() => {
+            setShowBubble(false);
+          }}
+        />
+      ) : (
+        <></>
+      )}
       <Map
         height={800}
         defaultZoom={zoomValue}
